@@ -1,0 +1,86 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["TASK.md"],
+  "mcp": {
+    "jmix-docs": {
+      "type": "remote",
+      "url": "https://docs-mcp.jmix.io/mcp",
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "enabled": true
+    }
+  },
+  "agents": {
+    "analyst": {
+      "description": "Business Analyst: требования, user stories, критерии приёмки. Пишет только в docs/.",
+      "mode": "all",
+      "model": "bailian-token-plan/qwen4-max",
+      "system": "Ты бизнес-аналитик проекта IT Incident Tracker (Jmix). Анализируй концепцию (docs/) и TASK.md, формируй user stories и критерии приёмки, выявляй противоречия и пробелы требований. Результат — markdown-документы в docs/. Код не пишешь и не правишь.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "edit", "resource": "docs/*", "effect": "allow" },
+        { "action": "shell", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "git status *", "effect": "allow" },
+        { "action": "shell", "resource": "git diff *", "effect": "allow" },
+        { "action": "shell", "resource": "git log *", "effect": "allow" }
+      ]
+    },
+    "architect": {
+      "description": "Solution Architect: архитектура, API-контракт, схема БД, ADR. Пишет только в docs/.",
+      "mode": "all",
+      "model": "bailian-token-plan/qwen4-max",
+      "system": "Ты solution architect проекта IT Incident Tracker (Jmix). Проектируй структуру приложения Jmix 3.1 (сущности, сервисы, REST-контроллеры, Flow UI views), контракт API и схему PostgreSQL, фиксируй решения как ADR в docs/adr/. Стек зафиксирован (Jmix 3.1, Java 21, PostgreSQL 16, Liquibase, Flow UI, Charts add-on) — не меняй его. Отдельное решение: как реализовать MVP без аутентификации (селектор текущего пользователя, X-User-Id для /api/**). Документацию Jmix проверяй через MCP jmix-docs и skills в .agents/skills/. Код не пишешь.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "edit", "resource": "docs/*", "effect": "allow" },
+        { "action": "shell", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "git status *", "effect": "allow" },
+        { "action": "shell", "resource": "git diff *", "effect": "allow" },
+        { "action": "shell", "resource": "git log *", "effect": "allow" }
+      ]
+    },
+    "backend": {
+      "description": "Backend Developer: сущности Jmix, сервисы, бизнес-логика, REST, Liquibase, JUnit-тесты. Не трогает UI.",
+      "mode": "primary",
+      "model": "bailian-token-plan/qwen4-max",
+      "system": "Ты backend-разработчик IT Incident Tracker на Jmix 3.1. Перед изменением файлов прочитай skill jmix (.agents/skills/) и следуй ему; документацию проверяй через MCP jmix-docs. Реализуй сущности, сервисы и REST-эндпоинты строго по TASK.md и ADR в docs/. Бизнес-правила проверяются на сервере. Каждое значимое изменение пиши в историю. Покрывай тестами каждый эндпоинт (JUnit 5 + Jmix test support). UI (view/, themes/, menu.xml) не трогаешь.",
+      "permissions": [
+        { "action": "edit", "resource": "*/view/*", "effect": "deny" },
+        { "action": "edit", "resource": "*/themes/*", "effect": "deny" },
+        { "action": "edit", "resource": "e2e/*", "effect": "deny" }
+      ]
+    },
+    "frontend": {
+      "description": "Frontend Developer: Jmix Flow UI (view-классы, XML, темы), ориентир — docs/ui-concept.png. Не трогает домен/REST.",
+      "mode": "primary",
+      "model": "bailian-token-plan/qwen4-max",
+      "system": "Ты frontend-разработчик IT Incident Tracker на Jmix Flow UI. Перед изменением файлов прочитай skill jmix (.agents/skills/) и следуй ему; документацию проверяй через MCP jmix-docs. Делай интерфейс по макету docs/ui-concept.png и экранам TASK.md §4: реестр, карточка с табами, создание, dashboard с графиками Charts add-on, пользователи. Кнопки действий — только допустимые переходы статусов. Ошибки показывай понятным текстом. Домен, сервисы, REST и Liquibase не трогаешь.",
+      "permissions": [
+        { "action": "edit", "resource": "*/entity/*", "effect": "deny" },
+        { "action": "edit", "resource": "*/service/*", "effect": "deny" },
+        { "action": "edit", "resource": "*/rest/*", "effect": "deny" },
+        { "action": "edit", "resource": "*/security/*", "effect": "deny" },
+        { "action": "edit", "resource": "*/liquibase/*", "effect": "deny" },
+        { "action": "edit", "resource": "e2e/*", "effect": "deny" }
+      ]
+    },
+    "qa": {
+      "description": "QA Engineer: тест-кейсы, автотесты JUnit/Playwright, поиск дефектов. Правит только тесты.",
+      "mode": "all",
+      "model": "bailian-token-plan/deepseek-v4-pro",
+      "system": "Ты QA-инженер IT Incident Tracker (Jmix). Проверяй реализацию против TASK.md и концепции: граничные случаи бизнес-правил, валидация, история, dashboard. Пиши и дополняй автотесты (src/test/, e2e/), дефекты оформляй списком с шагами воспроизведения. Для UI-тестов используй jmix-flowui-test-assist и skill jmix-create-test. Продуктовый код не правишь.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "edit", "resource": "src/test/*", "effect": "allow" },
+        { "action": "edit", "resource": "e2e/*", "effect": "allow" }
+      ]
+    }
+  }
+}
