@@ -46,7 +46,11 @@ public class DomainCleanup {
         incidentIds.add(incident.getId());
     }
 
-    /** Removes every incident in the store together with its children. */
+    /**
+     * Removes every incident in the store together with its children and
+     * restores the counter baseline, so a following create() reuses the same
+     * INC-NNN ids as before the purge (review finding on PR #3).
+     */
     public void purgeAllIncidents() {
         List<Incident> all = dataManager.load(Incident.class)
                 .query("select e from inc_Incident e")
@@ -54,6 +58,7 @@ public class DomainCleanup {
         for (Incident incident : all) {
             removeIncidentWithChildren(incident.getId());
         }
+        restoreCounterBaseline();
     }
 
     /** Removes tracked incidents and restores the counter baseline. */
@@ -62,6 +67,10 @@ public class DomainCleanup {
             removeIncidentWithChildren(id);
         }
         incidentIds.clear();
+        restoreCounterBaseline();
+    }
+
+    private void restoreCounterBaseline() {
         IncidentCounter counter = dataManager.load(IncidentCounter.class).id("incident").one();
         if (counter.getNextValue() != counterBaseline) {
             counter.setNextValue(counterBaseline);

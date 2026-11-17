@@ -1,6 +1,7 @@
 package com.company.incidentjmix.security;
 
 import io.jmix.core.JmixSecurityFilterChainOrder;
+import io.jmix.security.util.JmixHttpSecurityUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -43,6 +44,25 @@ public class IncidentJmixSecurityConfiguration {
                 .authorizeHttpRequests(authorize ->
                         authorize.anyRequest().permitAll()
                 );
+
+        return http.build();
+    }
+
+    /**
+     * Custom REST API (ADR-002): /api/** is reachable without authentication,
+     * the domain actor comes from the X-User-Id header. Anonymous requests get
+     * the Jmix anonymous authentication (no entity permissions); controllers
+     * execute domain services via SystemAuthenticator.withSystem.
+     */
+    @Bean
+    @Order(JmixSecurityFilterChainOrder.CUSTOM)
+    SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/api/**")
+                .authorizeHttpRequests(authorize ->
+                        authorize.anyRequest().permitAll()
+                )
+                .csrf(csrf -> csrf.disable());
+        JmixHttpSecurityUtils.configureAnonymous(http);
 
         return http.build();
     }
