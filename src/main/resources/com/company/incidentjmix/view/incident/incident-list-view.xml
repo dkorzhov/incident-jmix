@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://incidentListView.title"
+      focusComponent="searchField">
+    <data>
+        <collection id="incidentsDc" class="com.company.incidentjmix.entity.Incident">
+            <fetchPlan extends="_base">
+                <property name="assignee" fetchPlan="_base"/>
+            </fetchPlan>
+            <loader id="incidentsDl" readOnly="true">
+                <query><![CDATA[select e from inc_Incident e order by e.createdAt desc, e.id desc]]></query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <layout spacing="true" padding="true">
+        <hbox id="kpiRow" width="100%"/>
+
+        <hbox id="filtersRow" width="100%" alignItems="BASELINE">
+            <textField id="searchField"
+                       placeholder="msg://search.placeholder"
+                       width="20rem"
+                       clearButtonVisible="true"
+                       valueChangeMode="LAZY"/>
+            <comboBox id="statusFilter"
+                      placeholder="msg://statusFilter.all"
+                      width="12rem"
+                      clearButtonVisible="true"/>
+            <comboBox id="priorityFilter"
+                      placeholder="msg://priorityFilter.all"
+                      width="12rem"
+                      clearButtonVisible="true"/>
+        </hbox>
+
+        <dataGrid id="incidentsDataGrid" dataContainer="incidentsDc"
+                  width="100%" minHeight="20rem" classNames="incidents-grid">
+            <columns>
+                <column property="id" width="8rem"/>
+                <column property="title" flexGrow="1" autoWidth="true"/>
+                <column property="priority" width="10rem"/>
+                <column property="status" width="10rem"/>
+                <column property="assignee.name" width="14rem"
+                        header="msg://com.company.incidentjmix.entity/Incident.assignee"/>
+            </columns>
+        </dataGrid>
+
+        <span id="emptyState" classNames="empty-state"
+              text="msg://incidents.empty" visible="false"/>
+    </layout>
+</view>

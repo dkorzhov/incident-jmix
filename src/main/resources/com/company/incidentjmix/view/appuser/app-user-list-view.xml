@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://appUserListView.title">
+    <data>
+        <collection id="appUsersDc" class="com.company.incidentjmix.entity.AppUser">
+            <fetchPlan extends="_base"/>
+            <loader id="appUsersDl" readOnly="true">
+                <query><![CDATA[select e from inc_AppUser e order by e.id asc]]></query>
+            </loader>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <layout spacing="true" padding="true">
+        <dataGrid id="appUsersDataGrid" dataContainer="appUsersDc"
+                  width="100%" minHeight="20rem">
+            <columns>
+                <column property="id" width="6rem"/>
+                <column property="name" flexGrow="1" autoWidth="true"/>
+                <column property="role" width="12rem"/>
+            </columns>
+        </dataGrid>
+        <span id="emptyState" classNames="empty-state"
+              text="msg://appUsers.empty" visible="false"/>
+    </layout>
+</view>
