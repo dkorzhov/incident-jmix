@@ -47,6 +47,7 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
     testImplementation 'io.jmix.flowui:jmix-flowui-test-assist'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 configurations.implementation {
