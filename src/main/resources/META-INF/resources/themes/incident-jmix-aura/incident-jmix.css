@@ -217,3 +217,102 @@ vaadin-app-layout.jmix-main-view-app-layout::part(drawer) {
     color: var(--vaadin-text-color-secondary);
     padding: var(--vaadin-padding-m);
 }
+
+/* --- Incident card and create form (UI-2/UI-3, DMI-19) --- */
+
+.incident-card-header {
+    gap: var(--vaadin-gap-s);
+    flex-wrap: wrap;
+}
+
+.incident-card-header h3 {
+    margin: 0;
+    font-size: var(--aura-font-size-xl);
+    font-weight: var(--aura-font-weight-semibold);
+}
+
+.incident-number {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-l);
+    font-weight: var(--aura-font-weight-semibold);
+    white-space: nowrap;
+}
+
+.card-actions {
+    gap: var(--vaadin-gap-s);
+    flex-wrap: wrap;
+}
+
+.closed-notice {
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
+    color: var(--vaadin-text-color-secondary);
+    background: color-mix(in srgb, var(--aura-neutral) 15%, transparent);
+    border-radius: var(--vaadin-radius-l);
+}
+
+.field-label {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+}
+
+.resolution-text {
+    white-space: pre-wrap;
+}
+
+.timestamps-row {
+    gap: var(--vaadin-gap-m);
+    flex-wrap: wrap;
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+}
+
+.comments-feed {
+    gap: var(--vaadin-gap-s);
+    padding: 0;
+}
+
+.comment-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vaadin-gap-xs);
+    padding: var(--vaadin-padding-s) var(--vaadin-padding-m);
+    background: var(--aura-surface-color);
+    border: 1px solid var(--vaadin-border-color-secondary);
+    border-radius: var(--vaadin-radius-l);
+}
+
+.comment-meta {
+    display: flex;
+    align-items: baseline;
+    gap: var(--vaadin-gap-s);
+}
+
+.comment-author {
+    font-weight: var(--aura-font-weight-medium);
+}
+
+.comment-time {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    white-space: nowrap;
+}
+
+.comment-text {
+    white-space: pre-wrap;
+}
+
+.history-time {
+    color: var(--vaadin-text-color-secondary);
+    font-size: var(--aura-font-size-s);
+    white-space: nowrap;
+}
+
+.history-details {
+    white-space: pre-line;
+}
+
+/* Registry: «New incident» button on the right of the filters row (UI-1) */
+
+.new-incident-button {
+    margin-inline-start: auto;
+}

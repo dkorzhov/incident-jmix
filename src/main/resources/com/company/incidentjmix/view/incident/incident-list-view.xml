@@ -32,6 +32,8 @@
                       placeholder="msg://priorityFilter.all"
                       width="12rem"
                       clearButtonVisible="true"/>
+            <button id="newIncidentButton" text="msg://newIncident.text"
+                    classNames="new-incident-button"/>
         </hbox>
 
         <dataGrid id="incidentsDataGrid" dataContainer="incidentsDc"
