@@ -3,7 +3,6 @@ package com.company.incidentjmix.view.login;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.login.AbstractLogin.LoginEvent;
 import com.vaadin.flow.component.login.LoginI18n;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.i18n.LocaleChangeEvent;
 import com.vaadin.flow.i18n.LocaleChangeObserver;
 import com.vaadin.flow.router.Route;
@@ -11,7 +10,6 @@ import com.vaadin.flow.server.VaadinSession;
 import io.jmix.core.CoreProperties;
 import io.jmix.core.MessageTools;
 import io.jmix.core.security.AccessDeniedException;
-import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.loginform.JmixLoginForm;
 import io.jmix.flowui.kit.component.ComponentUtils;
 import io.jmix.flowui.kit.component.loginform.JmixLoginI18n;
@@ -48,9 +46,6 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     @Autowired
     private MessageTools messageTools;
 
-    @Autowired
-    private Notifications notifications;
-
     @ViewComponent
     private JmixLoginForm login;
 
@@ -67,15 +62,36 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     public void onInit(final InitEvent event) {
         initLocales();
         initDefaultCredentials();
-        showWarningIfDefaultCredentials();
     }
 
-    private void showWarningIfDefaultCredentials() {
-        if ("admin".equals(defaultPassword)) {
-            notifications.create("WARNING: Change admin password and remove ui.login.default* properties when deploying the application to production")
-                    .withPosition(Notification.Position.BOTTOM_CENTER)
-                    .withDuration(10000)
-                    .show();
+    @Subscribe
+    public void onReady(final ReadyEvent event) {
+        autoAuthenticate();
+    }
+
+    /**
+     * ADR-003: the MVP has no real authentication. The technical admin account
+     * is logged in automatically; the domain actor is chosen in the MainView
+     * header selector. If auto-login fails, the template login form stays
+     * available as a fallback.
+     * <p>
+     * Runs in {@link ReadyEvent}, not {@link InitEvent}: {@code LoginViewSupport}
+     * navigates to the default view after authentication, which requires the
+     * router to be initialized ("Routing is not in use or not yet initialized"
+     * otherwise).
+     */
+    private void autoAuthenticate() {
+        if (StringUtils.isBlank(defaultUsername) || StringUtils.isBlank(defaultPassword)) {
+            return;
+        }
+        try {
+            loginViewSupport.authenticate(
+                    AuthDetails.of(defaultUsername, defaultPassword)
+                            .withLocale(messageTools.getDefaultLocale())
+            );
+        } catch (final BadCredentialsException | DisabledException | LockedException | AccessDeniedException e) {
+            log.warn("Auto-login failed for user '{}': {}", defaultUsername, e.toString());
+            login.setError(true);
         }
     }
 
