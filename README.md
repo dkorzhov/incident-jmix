@@ -35,9 +35,23 @@ Liquibase changelog: `src/main/resources/com/company/incidentjmix/liquibase/chan
 
 ## Demo-данные
 
-План (TASK.md §6): `SEED_DEMO=true` — пользователи и инциденты в разных статусах
-(включая Critical и решённый сегодня). Свойство-заготовка: `app.seed-demo` в
-`application.properties`; реализация — отдельная задача.
+Пользователи (4: три инженера и менеджер) предзагружаются **всегда** —
+Liquibase-changelog `020-init-app-user.xml`, независимо от `SEED_DEMO`.
+
+Демо-инциденты включаются переменной окружения `SEED_DEMO=true`
+(свойство `app.seed-demo` в `application.properties`):
+
+```sh
+docker compose up -d db
+SEED_DEMO=true ./gradlew bootRun
+```
+
+При старте `DemoDataSeeder` создаёт 6 инцидентов через доменные сервисы
+(с автоматической историей): New Critical «Проблемы с VPN», New Medium,
+In Progress High «Не работает почта» (с комментарием), In Progress Critical
+«Медленно работает БД», Resolved сегодня High (с resolution) и Closed Low
+с полным циклом истории. Загрузчик идемпотентен: если в БД уже есть хотя бы
+один инцидент, seed пропускается. По умолчанию выключен.
 
 ## Тесты
 
