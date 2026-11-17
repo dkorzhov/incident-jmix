@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+        logicalFilePath="com/company/incidentjmix/liquibase/changelog/020-init-app-user.xml">
+
+    <!-- Domain users (ADR-001). Always preloaded, independent of SEED_DEMO. -->
+
+    <changeSet id="1" author="incident-jmix" context="!cuba">
+        <createTable tableName="INC_APP_USER">
+            <column name="ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="VERSION" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="NAME" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ROLE" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="incident-jmix" context="!cuba">
+        <insert tableName="INC_APP_USER">
+            <column name="ID" valueNumeric="1"/>
+            <column name="VERSION" valueNumeric="1"/>
+            <column name="NAME" value="Иванов И.И."/>
+            <column name="ROLE" value="engineer"/>
+        </insert>
+        <insert tableName="INC_APP_USER">
+            <column name="ID" valueNumeric="2"/>
+            <column name="VERSION" valueNumeric="1"/>
+            <column name="NAME" value="Петров П.П."/>
+            <column name="ROLE" value="engineer"/>
+        </insert>
+        <insert tableName="INC_APP_USER">
+            <column name="ID" valueNumeric="3"/>
+            <column name="VERSION" valueNumeric="1"/>
+            <column name="NAME" value="Сидоров А.А."/>
+            <column name="ROLE" value="engineer"/>
+        </insert>
+        <insert tableName="INC_APP_USER">
+            <column name="ID" valueNumeric="4"/>
+            <column name="VERSION" valueNumeric="1"/>
+            <column name="NAME" value="Кузнецова М.М."/>
+            <column name="ROLE" value="manager"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
