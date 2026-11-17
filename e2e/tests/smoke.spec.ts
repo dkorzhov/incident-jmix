@@ -5,5 +5,5 @@ import { test, expect } from '@playwright/test';
 test('app serves login page', async ({ page }) => {
   const response = await page.goto('/');
   expect(response?.status()).toBe(200);
-  await expect(page.locator('vaadin-login-form')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible({ timeout: 30_000 });
 });
