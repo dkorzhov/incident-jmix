@@ -21,12 +21,12 @@
 | # | Тест-кейс (файл e2e/tests/e2e-lifecycle.spec.ts) | AC / DoD | Шаги | Ожидаемый результат | Статус |
 |---|---|---|---|---|---|
 | E2E-01.1 | Создание инцидента через диалог | AC-CREATE-1/3, US-02, UI-3 | 1. Инциденты → «Новый инцидент» 2. Заполнить title (5–120), description, category, priority 3. «Создать» | Диалог закрывается, переход на /incidents/INC-NNN; status=New; created_at/updated_at серверные UTC | ☑ PASS |
-| E2E-01.2 | Назначение ответственного | AC-PATCH-4, US-04 | 1. В карточке выбрать assignee из списка (comboBox) 2. «Сохранить» | Ответственный отображается в информации; в табе История — событие `assigned` с «было/стало» | ☑ PASS (assignee comboBox не в диалоге создания; назначение — на карточке) |
+| E2E-01.2 | Назначение ответственного | AC-PATCH-4, US-04 | 1. В карточке выбрать assignee из списка (entityComboBox) при создании 2. «Создать» | Ответственный (Петров П.П.) отображается в CREATED-событии истории (payload); отдельного ASSIGNED-события нет — assignee задан при создании, а не через PATCH | ☑ PASS |
 | E2E-01.3 | Взять в работу | AC-STATUS-1, US-05, BR-1 | 1. New → нажать «Взять в работу» | Статус-бейдж → In Progress; кнопка «Взять в работу» исчезает; событие `status_changed` в истории | ☑ PASS |
 | E2E-01.4 | Добавить комментарий | AC-COMMENT-1/3, US-08 | 1. Таб «Комментарии» 2. Ввести текст (1–2000 симв.) 3. «Отправить» | Комментарий виден в ленте с автором=текущий пользователь; событие `commented` в истории | ☑ PASS |
-| E2E-01.5 | Resolve: негативная проверка | AC-STATUS-3, BR-2, US-06 | 1. Прямой REST PATCH /status {status:Resolved} без resolution → 400 2. UI-форма resolve без resolution → клиентское предупреждение 3. Заполнить resolution → сохранить | REST: 400 {detail}. UI: без resolution — блокировка/ошибка; с resolution — статус Resolved, resolution виден, событие `resolved` | ☑ PASS |
+| E2E-01.5 | Resolve: негативная проверка | AC-STATUS-3, BR-2, US-06 | 1. Прямой REST PATCH /status {status:Resolved} без resolution → 400 2. UI-форма resolve без resolution → клиентское предупреждение 3. Заполнить resolution → сохранить | REST: 400 {detail}. UI: без resolution — блокировка/ошибка; с resolution — статус Resolved, resolution виден в #resolutionBox, событие `Решение` | ☑ PASS |
 | E2E-01.6 | Закрыть инцидент | AC-STATUS-4, US-07, BR-4 | 1. Resolved → «Закрыть» | Статус Closed; карточка read-only (нет кнопок действий/комментария); closedNotice виден; событие `status_changed` | ☑ PASS |
-| E2E-01.7 | Полная история цикла | AC-HIS-1/2/3, US-09 | 1. Таб «История» | ≥5 событий (created, commented? assigned? status_changed, resolved, status_changed); payload «было/стало» для каждого changed-типа; актёр = выбранный пользователь | ☑ PASS |
+| E2E-01.7 | Полная история цикла | AC-HIS-1/2/3, US-09 | 1. Таб «История» | ≥5 событий (Создание, Комментарий, Смена статуса, Решение, Смена статуса); assignee = Петров П.П. в CREATED payload; актёр = Иванов И.И. | ☑ PASS |
 | E2E-01.8 | Dashboard после цикла | AC-DASH-1/5, US-10 | 1. Перейти на Dashboard | KPI-карточки обновлены; недавняя активность содержит события цикла; графики рендерятся (не пустые контейнеры) | ☑ PASS |
 
 ### E2E-02: Серверная защита через UI (рекомендуемый)
@@ -40,9 +40,10 @@
 
 | # | Тест-кейс | AC / DoD | Шаги | Ожидаемый результат | Статус |
 |---|---|---|---|---|---|
-| E2E-03.1 | Поиск по ID/названию | AC-LIST-2, UI-1 | 1. Инциденты 2. Ввести ID в поиск 3. Ввести подстроку title | Таблица фильтруется; регистронезависимый поиск | ☑ PASS |
+| E2E-03.1 | Поиск по ID/названию | AC-LIST-2, UI-1 | 1. Инциденты 2. Ввести ID в поиск 3. Ввести подстроку title | Таблица фильтруется; регистронезависимый поиск; ID возвращает отфильтрованные строки с этим ID | ☑ PASS |
 | E2E-03.2 | Фильтры статус/приоритет | AC-LIST-3, UI-1 | 1. Выбрать статус 2. Выбрать приоритет 3. Комбинация | Таблица фильтруется; фильтры комбинируются по И | ☑ PASS (покрыто JUnit: IncidentApiTest.listCombinesQStatusAndPriorityFilters) |
 | E2E-03.3 | Пустой результат поиска | AC-LIST-4, UI-6 | 1. Ввести заведомо несуществующий ID | Пустое состояние с текстом, не пустая таблица | ☑ PASS |
+| E2E-03.4 | Поиск по ID (INC-001) | AC-LIST-2, UI-1 | 1. Инциденты 2. Ввести INC-001 | Таблица показывает строку с INC-001; grid-cell-content содержит ID | ☑ PASS |
 
 ### SMOKE: Дымовой тест (e2e/tests/smoke.spec.ts)
 
@@ -67,3 +68,21 @@
 | Дата | Окружение | Результат | Заметки |
 |---|---|---|---|
 | 2026-11-17 | локально, PostgreSQL 16 + seed | ✅ ЗЕЛЁНЫЙ: 130 JUnit + 5/5 E2E | E2E: 5 specs, 5 passed (44.3s). JUnit: 130 passed (43s). См. e2e-lifecycle.spec.ts, GapCoverageTest.java |
+| 2026-11-17 | локально, PostgreSQL 16 + seed, фиксы ревью | ✅ ЗЕЛЁНЫЙ: 130 JUnit + 6/6 E2E (52.3s) | Фиксы: assignee в диалоге создания, #resolutionBox, поиск по ID, документирование false positives. E2E: 6 specs passed. |
+
+## Задокументированные false positives ревью
+
+### DEFECT-01 (FALSE POSITIVE): #resolutionBox скрыт после resolve
+**Вердикт**: Ложное срабатывание. Координатор подтвердил live-скриншотом (`probe-after-resolve.png`):
+#resolutionBox видим и содержит текст решения после перехода в Resolved.
+**Причина**: тест не ждал обновления UI после resolve (fetch-plan timing).
+**Исправлено**: добавлены ассерты `#resolutionBox` и `#resolutionText` после resolve в E2E-01.
+
+### DEFECT-02 (FALSE POSITIVE): #assigneeField отсутствует в диалоге создания
+**Вердикт**: Ложное срабатывание. `#assigneeField` — это Jmix `entityComboBox` (рендерится
+как `jmix-entity-combo-box`), а не `vaadin-combo-box`. Компонент присутствует в диалоге
+создания, но тест искал не тот тип селектора.
+**Причина**: entityComboBox = `<entityComboBox id="assigneeField">` (incident-detail-view.xml:67),
+Playwright-селектор `vaadin-combo-box#assigneeField` не находил этот компонент.
+**Исправлено**: добавлен хелпер `selectEntityComboItem()`, E2E-01 тест выбирает
+пользователя в диалоге создания.

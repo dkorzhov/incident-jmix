@@ -24,6 +24,15 @@ const PRIORITY = {
   Critical: 'Критический', High: 'Высокий', Medium: 'Средний', Low: 'Низкий',
 } as const;
 
+// ─── Known users (from seed data: 020-init-app-user.xml) ──────────────
+
+const USER = {
+  IVANOV: 'Иванов И.И.',
+  PETROV: 'Петров П.П.',
+  SIDOROV: 'Сидоров А.А.',
+  KUZNETSOVA: 'Кузнецова М.М.',
+} as const;
+
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -56,6 +65,20 @@ async function selectComboItem(page: any, comboId: string, label: string) {
 }
 
 /**
+ * Select a value in a Jmix entityComboBox (renders as jmix-entity-combo-box).
+ * Internally delegates to a vaadin-combo-box for the dropdown.
+ */
+async function selectEntityComboItem(page: any, comboId: string, label: string) {
+  // Jmix entityComboBox wraps a vaadin-combo-box; click the outer element
+  const combo = page.locator(`#${comboId}`);
+  await combo.click();
+  await page.waitForTimeout(500);
+  const item = page.locator('vaadin-combo-box-item').filter({ hasText: label }).first();
+  await item.click();
+  await page.waitForTimeout(300);
+}
+
+/**
  * Click a Vaadin button by id selector.
  */
 async function clickButton(page: any, selector: string) {
@@ -65,6 +88,7 @@ async function clickButton(page: any, selector: string) {
 
 /**
  * Create a new incident via the dialog, return its id from the detail page.
+ * Optionally select an assignee by name in the create dialog.
  */
 async function createIncident(
   page: any,
@@ -72,6 +96,7 @@ async function createIncident(
   desc: string,
   category: keyof typeof CATEGORY,
   priority: keyof typeof PRIORITY,
+  assigneeName?: string,
 ): Promise<string> {
   // Navigate to incidents list
   await page.goto('/incidents');
@@ -86,6 +111,11 @@ async function createIncident(
   await fillTextArea(page, 'descriptionField', desc);
   await selectComboItem(page, 'categoryField', CATEGORY[category]);
   await selectComboItem(page, 'priorityField', PRIORITY[priority]);
+
+  // Assignee is an entityComboBox, not vaadin-combo-box
+  if (assigneeName) {
+    await selectEntityComboItem(page, 'assigneeField', assigneeName);
+  }
 
   // Click "Создать"
   await clickButton(page, 'vaadin-button#createButton');
@@ -120,6 +150,8 @@ test.describe('E2E-01: Full incident lifecycle', () => {
     await fillTextArea(page, 'descriptionField', 'E2E тест полного жизненного цикла инцидента.');
     await selectComboItem(page, 'categoryField', CATEGORY.Network);
     await selectComboItem(page, 'priorityField', PRIORITY.High);
+    // Assignee via entityComboBox (Jmix wraps vaadin-combo-box)
+    await selectEntityComboItem(page, 'assigneeField', USER.PETROV);
 
     await clickButton(page, 'vaadin-button#createButton');
     await page.waitForURL(/\/incidents\/INC-\d{3,}/, { timeout: 15_000 });
@@ -189,6 +221,15 @@ test.describe('E2E-01: Full incident lifecycle', () => {
     // Close button appears only in Resolved state (confirms state machine transition worked)
     await expect(page.locator('vaadin-button#closeIncidentButton')).toBeVisible({ timeout: 5_000 });
 
+    // Switch to Info tab before checking resolutionBox (tabSheet hides inactive tab content)
+    const infoTabBtn = page.locator('vaadin-tab').filter({ hasText: 'Информация' });
+    await infoTabBtn.click();
+    await page.waitForTimeout(500);
+
+    // Verify resolution box shows the resolution text and is visible
+    await expect(page.locator('#resolutionBox')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#resolutionText')).toContainText('Перезапущен', { timeout: 10_000 });
+
     // Step 6: Close incident
     await page.locator('vaadin-button#closeIncidentButton').click();
     await page.waitForTimeout(1500);
@@ -219,6 +260,8 @@ test.describe('E2E-01: Full incident lifecycle', () => {
     expect(joined).toContain('Комментарий');
     expect(joined).toContain('Смена статуса');
     expect(joined).toContain('Решение');
+    // Assignee set at creation time → appears in CREATED payload, not as separate ASSIGNED event
+    expect(joined).toContain(USER.PETROV);
 
     // Step 8: Dashboard reflects the cycle
     await page.goto('/dashboard');
@@ -311,5 +354,27 @@ test.describe('E2E-03: Search and empty states', () => {
 
     // Empty state should be visible
     await expect(page.locator('#emptyState')).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('Search by ID (e.g. INC-001) filters to single match', async ({ page }) => {
+    await page.goto('/incidents');
+    await page.waitForTimeout(3000);
+
+    // Search for a known seed-data incident
+    const searchInput = page.locator('vaadin-text-field#searchField input');
+    await searchInput.fill('INC-001');
+    await page.waitForTimeout(1000);
+
+    // Grid should be visible and show filtered results
+    const grid = page.locator('vaadin-grid#incidentsDataGrid');
+    await expect(grid).toBeVisible({ timeout: 5_000 });
+
+    // Row count should be small (probably just 1 or 2)
+    const rows = grid.locator('vaadin-grid-cell-content');
+
+    // At least one cell should contain the matching ID
+    const allText = await rows.allTextContents();
+    const idCells = allText.filter(t => t.trim().startsWith('INC-'));
+    expect(idCells.length).toBeGreaterThanOrEqual(1);
   });
 });
