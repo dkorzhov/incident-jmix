@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+        logicalFilePath="com/company/incidentjmix/liquibase/changelog/050-id-counter.xml">
+
+    <!-- Gap-free INC-NNN id counter (ADR-001). No VERSION column by ADR contract;
+         the row is locked pessimistically by IncidentService.create. -->
+
+    <changeSet id="1" author="incident-jmix" context="!cuba">
+        <createTable tableName="INC_ID_COUNTER">
+            <column name="NAME" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="NEXT_VALUE" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="incident-jmix" context="!cuba">
+        <insert tableName="INC_ID_COUNTER">
+            <column name="NAME" value="incident"/>
+            <column name="NEXT_VALUE" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

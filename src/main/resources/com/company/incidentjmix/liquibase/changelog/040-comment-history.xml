@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+        logicalFilePath="com/company/incidentjmix/liquibase/changelog/040-comment-history.xml">
+
+    <!-- Comment and HistoryEvent (ADR-001). Incidents are never deleted in the MVP,
+         so FKs carry no ON DELETE clause; @Composition/@OnDeleteInverse are Studio indicators. -->
+
+    <changeSet id="1" author="incident-jmix" context="!cuba">
+        <createTable tableName="INC_COMMENT">
+            <column name="ID" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="VERSION" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="INCIDENT_ID" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="AUTHOR_ID" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TEXT" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_AT" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2" author="incident-jmix" context="!cuba">
+        <createIndex indexName="IDX_INC_COMMENT_ON_INCIDENT_ID" tableName="INC_COMMENT">
+            <column name="INCIDENT_ID"/>
+        </createIndex>
+        <addForeignKeyConstraint baseTableName="INC_COMMENT" baseColumnNames="INCIDENT_ID"
+                                 constraintName="FK_INC_COMMENT_ON_INCIDENT"
+                                 referencedTableName="INC_INCIDENT" referencedColumnNames="ID"/>
+        <addForeignKeyConstraint baseTableName="INC_COMMENT" baseColumnNames="AUTHOR_ID"
+                                 constraintName="FK_INC_COMMENT_ON_AUTHOR"
+                                 referencedTableName="INC_APP_USER" referencedColumnNames="ID"/>
+    </changeSet>
+
+    <changeSet id="3" author="incident-jmix" context="!cuba">
+        <createTable tableName="INC_HISTORY_EVENT">
+            <column name="ID" type="int" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="VERSION" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="INCIDENT_ID" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ACTOR_ID" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TYPE" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="PAYLOAD" type="clob"/>
+            <column name="CREATED_AT" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="4" author="incident-jmix" context="!cuba">
+        <createIndex indexName="IDX_INC_HISTORY_ON_INCIDENT_CREATED" tableName="INC_HISTORY_EVENT">
+            <column name="INCIDENT_ID"/>
+            <column name="CREATED_AT"/>
+        </createIndex>
+        <createIndex indexName="IDX_INC_HISTORY_ON_CREATED_AT" tableName="INC_HISTORY_EVENT">
+            <column name="CREATED_AT"/>
+        </createIndex>
+        <addForeignKeyConstraint baseTableName="INC_HISTORY_EVENT" baseColumnNames="INCIDENT_ID"
+                                 constraintName="FK_INC_HISTORY_ON_INCIDENT"
+                                 referencedTableName="INC_INCIDENT" referencedColumnNames="ID"/>
+        <addForeignKeyConstraint baseTableName="INC_HISTORY_EVENT" baseColumnNames="ACTOR_ID"
+                                 constraintName="FK_INC_HISTORY_ON_ACTOR"
+                                 referencedTableName="INC_APP_USER" referencedColumnNames="ID"/>
+    </changeSet>
+
+</databaseChangeLog>
