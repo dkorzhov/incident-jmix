@@ -8,6 +8,7 @@ import com.vaadin.flow.router.Route;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.app.main.StandardMainView;
 import io.jmix.flowui.component.combobox.JmixComboBox;
+import io.jmix.flowui.view.MessageBundle;
 import io.jmix.flowui.view.View.InitEvent;
 import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.ViewComponent;
@@ -38,6 +39,9 @@ public class MainView extends StandardMainView {
     @ViewComponent
     private JmixComboBox<AppUser> userSelector;
 
+    @ViewComponent
+    private MessageBundle messageBundle;
+
     @Subscribe
     public void onInit(final InitEvent event) {
         initUserSelector();
@@ -54,7 +58,7 @@ public class MainView extends StandardMainView {
             users = appUserService.list();
         } catch (Exception e) {
             log.error("Failed to load application users", e);
-            notifications.create("Не удалось загрузить список пользователей: " + e.getMessage())
+            notifications.create(messageBundle.getMessage("users.loadError") + " " + e.getMessage())
                     .withType(Notifications.Type.ERROR)
                     .show();
             return;

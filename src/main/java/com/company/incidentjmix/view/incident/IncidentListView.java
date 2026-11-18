@@ -7,6 +7,8 @@ import com.company.incidentjmix.service.DashboardData;
 import com.company.incidentjmix.service.DashboardService;
 import com.company.incidentjmix.view.main.MainView;
 import com.company.incidentjmix.view.support.KpiCards;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -14,14 +16,18 @@ import com.vaadin.flow.data.renderer.Renderer;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.Route;
 import io.jmix.core.Messages;
+import io.jmix.flowui.DialogWindows;
 import io.jmix.flowui.Notifications;
 import io.jmix.flowui.component.combobox.JmixComboBox;
+import io.jmix.flowui.component.grid.DataGrid;
 import io.jmix.flowui.component.textfield.TypedTextField;
+import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.CollectionLoader;
 import io.jmix.flowui.view.View.InitEvent;
 import io.jmix.flowui.view.MessageBundle;
 import io.jmix.flowui.view.View.ReadyEvent;
 import io.jmix.flowui.view.StandardListView;
+import io.jmix.flowui.view.StandardOutcome;
 import io.jmix.flowui.view.Subscribe;
 import io.jmix.flowui.view.Supply;
 import io.jmix.flowui.view.Target;
@@ -38,7 +44,7 @@ import java.util.List;
 /**
  * Incident registry (TASK.md §4, ADR-004): KPI cards, search by ID/title,
  * status/priority filters, badge table sorted by creation time desc.
- * Read-only in DMI-18: the detail view and the create button are DMI-19.
+ * DMI-19: «New incident» dialog and row navigation to the incident card.
  */
 @Route(value = "incidents", layout = MainView.class)
 @ViewController(id = "inc_Incident.list")
@@ -59,11 +65,17 @@ public class IncidentListView extends StandardListView<Incident> {
     @Autowired
     private Notifications notifications;
 
+    @Autowired
+    private DialogWindows dialogWindows;
+
     @ViewComponent
     private MessageBundle messageBundle;
 
     @ViewComponent
     private CollectionLoader<Incident> incidentsDl;
+
+    @ViewComponent
+    private DataGrid<Incident> incidentsDataGrid;
 
     @ViewComponent
     private TypedTextField<String> searchField;
@@ -100,6 +112,35 @@ public class IncidentListView extends StandardListView<Incident> {
         priorityFilter.addValueChangeListener(e -> applyFilters());
 
         searchField.addValueChangeListener(e -> applyFilters());
+
+        incidentsDataGrid.addItemClickListener(e -> {
+            Incident incident = e.getItem();
+            if (incident != null) {
+                UI.getCurrent().navigate("incidents/" + incident.getId());
+            }
+        });
+    }
+
+    /**
+     * Opens the create form as a dialog (DMI-19). After a successful save the
+     * registry is refreshed and the user is navigated to the new incident card.
+     */
+    @Subscribe("newIncidentButton")
+    public void onNewIncidentButtonClick(final ClickEvent<JmixButton> event) {
+        dialogWindows.detail(this, Incident.class)
+                .withViewClass(IncidentDetailView.class)
+                .newEntity()
+                .withAfterCloseListener(closeEvent -> {
+                    if (closeEvent.closedWith(StandardOutcome.SAVE)) {
+                        incidentsDl.load();
+                        loadKpi();
+                        String newId = closeEvent.getView().getCreatedIncidentId();
+                        if (newId != null) {
+                            UI.getCurrent().navigate("incidents/" + newId);
+                        }
+                    }
+                })
+                .open();
     }
 
     @Override

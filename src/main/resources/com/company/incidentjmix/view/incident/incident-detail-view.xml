@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<view xmlns="http://jmix.io/schema/flowui/view"
+      title="msg://incidentDetailView.title"
+      focusComponent="titleField">
+    <data>
+        <instance id="incidentDc" class="com.company.incidentjmix.entity.Incident">
+            <fetchPlan extends="_base">
+                <property name="assignee" fetchPlan="_base"/>
+            </fetchPlan>
+            <loader id="incidentDl"/>
+        </instance>
+        <collection id="usersDc" class="com.company.incidentjmix.entity.AppUser">
+            <fetchPlan extends="_instance_name"/>
+            <loader id="usersDl">
+                <query><![CDATA[select e from inc_AppUser e order by e.id asc]]></query>
+            </loader>
+        </collection>
+        <!-- No loader: populated from IncidentService.get(id) in the controller. -->
+        <collection id="historyDc" class="com.company.incidentjmix.entity.HistoryEvent">
+            <fetchPlan extends="_base">
+                <property name="actor" fetchPlan="_base"/>
+            </fetchPlan>
+        </collection>
+    </data>
+    <facets>
+        <dataLoadCoordinator auto="true"/>
+    </facets>
+    <actions>
+        <action id="saveCloseAction" type="detail_saveClose"/>
+        <action id="closeAction" type="detail_close" text="msg://cancel.text"/>
+    </actions>
+    <layout spacing="true" padding="true">
+        <hbox id="cardHeader" width="100%" alignItems="BASELINE">
+            <span id="incidentNumber" classNames="incident-number"/>
+            <h3 id="incidentTitle"/>
+            <span id="priorityBadge" classNames="badge"/>
+            <span id="statusBadge" classNames="badge"/>
+        </hbox>
+
+        <span id="closedNotice" classNames="closed-notice"
+              text="msg://closed.notice" visible="false"/>
+
+        <hbox id="actionsRow" width="100%">
+            <button id="takeInProgressButton" text="msg://takeInProgress.text"/>
+            <button id="resolveButton" text="msg://resolve.text"/>
+            <button id="closeIncidentButton" text="msg://closeIncident.text"/>
+            <button id="saveButton" text="msg://save.text"/>
+            <button id="createButton" action="saveCloseAction"/>
+            <button id="cancelButton" action="closeAction"/>
+        </hbox>
+
+        <tabSheet id="cardTabs" width="100%">
+            <tab id="infoTab" label="msg://tabs.info">
+                <vbox id="infoBox" width="100%" spacing="true" padding="true">
+                    <formLayout id="form" dataContainer="incidentDc">
+                        <textField id="titleField" property="title"
+                                   maxLength="120" required="true"
+                                   requiredMessage="msg://validation.titleRequired"/>
+                        <textArea id="descriptionField" property="description"
+                                  maxLength="2000" trimEnabled="false"/>
+                        <comboBox id="categoryField" property="category"
+                                  required="true"
+                                  requiredMessage="msg://validation.categoryRequired"/>
+                        <comboBox id="priorityField" property="priority"
+                                  required="true"
+                                  requiredMessage="msg://validation.priorityRequired"/>
+                        <entityComboBox id="assigneeField" property="assignee"
+                                        itemsContainer="usersDc"
+                                        clearButtonVisible="true"/>
+                    </formLayout>
+                    <vbox id="resolutionBox">
+                        <span classNames="field-label"
+                              text="msg://com.company.incidentjmix.entity/Incident.resolution"/>
+                        <span id="resolutionText" classNames="resolution-text"/>
+                    </vbox>
+                    <hbox id="timestampsRow" width="100%">
+                        <span id="createdAtText"/>
+                        <span id="updatedAtText"/>
+                    </hbox>
+                </vbox>
+            </tab>
+            <tab id="historyTab" label="msg://tabs.history">
+                <vbox id="historyBox" width="100%" padding="true">
+                    <dataGrid id="historyDataGrid" dataContainer="historyDc"
+                              width="100%" minHeight="16rem">
+                        <columns>
+                            <column key="time" width="12rem" header="msg://history.time"/>
+                            <column key="actor" width="12rem" header="msg://history.actor"/>
+                            <column key="type" width="12rem" header="msg://history.type"/>
+                            <column key="details" flexGrow="1" header="msg://history.details"/>
+                        </columns>
+                    </dataGrid>
+                    <span id="historyEmpty" classNames="empty-state"
+                          text="msg://history.empty" visible="false"/>
+                </vbox>
+            </tab>
+            <tab id="commentsTab" label="msg://tabs.comments">
+                <vbox id="commentsBox" width="100%" spacing="true" padding="true">
+                    <vbox id="commentsFeed" width="100%" classNames="comments-feed"/>
+                    <span id="commentsEmpty" classNames="empty-state"
+                          text="msg://comments.empty" visible="false"/>
+                    <vbox id="commentForm" width="100%" spacing="true">
+                        <textArea id="commentField" width="100%"
+                                  placeholder="msg://comment.placeholder"
+                                  maxLength="2000" trimEnabled="false"/>
+                        <button id="sendCommentButton" text="msg://comment.send"/>
+                    </vbox>
+                </vbox>
+            </tab>
+        </tabSheet>
+    </layout>
+</view>
