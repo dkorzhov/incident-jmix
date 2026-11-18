@@ -1,118 +1,84 @@
 package com.company.incidentjmix.view.main;
 
-import com.company.incidentjmix.entity.User;
-import com.google.common.base.Strings;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.avatar.AvatarVariant;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Span;
+import com.company.incidentjmix.entity.AppUser;
+import com.company.incidentjmix.service.AppUserService;
+import com.company.incidentjmix.view.support.CurrentAppUserProvider;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.router.Route;
-import io.jmix.core.Messages;
-import io.jmix.core.usersubstitution.CurrentUserSubstitution;
-import io.jmix.flowui.UiComponents;
+import io.jmix.flowui.Notifications;
 import io.jmix.flowui.app.main.StandardMainView;
-import io.jmix.flowui.view.Install;
+import io.jmix.flowui.component.combobox.JmixComboBox;
+import io.jmix.flowui.view.View.InitEvent;
+import io.jmix.flowui.view.Subscribe;
+import io.jmix.flowui.view.ViewComponent;
 import io.jmix.flowui.view.ViewController;
 import io.jmix.flowui.view.ViewDescriptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.List;
 
 @Route("")
 @ViewController(id = "inc_MainView")
 @ViewDescriptor(path = "main-view.xml")
 public class MainView extends StandardMainView {
 
+    private static final Logger log = LoggerFactory.getLogger(MainView.class);
+
     @Autowired
-    private Messages messages;
+    private AppUserService appUserService;
+
     @Autowired
-    private UiComponents uiComponents;
+    private CurrentAppUserProvider currentAppUserProvider;
+
     @Autowired
-    private CurrentUserSubstitution currentUserSubstitution;
+    private Notifications notifications;
 
-    @Install(to = "userMenu", subject = "buttonRenderer")
-    private Component userMenuButtonRenderer(final UserDetails userDetails) {
-        if (!(userDetails instanceof User user)) {
-            return null;
-        }
+    @ViewComponent
+    private JmixComboBox<AppUser> userSelector;
 
-        String userName = generateUserName(user);
-
-        Div content = uiComponents.create(Div.class);
-        content.setClassName("user-menu-button-content");
-
-        Avatar avatar = createAvatar(userName);
-
-        Span name = uiComponents.create(Span.class);
-        name.setText(userName);
-        name.setClassName("user-menu-text");
-
-        content.add(avatar, name);
-
-        if (isSubstituted(user)) {
-            Span subtext = uiComponents.create(Span.class);
-            subtext.setText(messages.getMessage("userMenu.substituted"));
-            subtext.setClassName("user-menu-subtext");
-
-            content.add(subtext);
-        }
-
-        return content;
+    @Subscribe
+    public void onInit(final InitEvent event) {
+        initUserSelector();
     }
 
-    @Install(to = "userMenu", subject = "headerRenderer")
-    private Component userMenuHeaderRenderer(final UserDetails userDetails) {
-        if (!(userDetails instanceof User user)) {
-            return null;
+    /**
+     * ADR-003: header selector of the domain actor. Same source as
+     * GET /api/users (AppUserService.list()); the choice is kept in the
+     * Vaadin session, default is the first user by id.
+     */
+    private void initUserSelector() {
+        List<AppUser> users;
+        try {
+            users = appUserService.list();
+        } catch (Exception e) {
+            log.error("Failed to load application users", e);
+            notifications.create("Не удалось загрузить список пользователей: " + e.getMessage())
+                    .withType(Notifications.Type.ERROR)
+                    .show();
+            return;
         }
 
-        Div content = uiComponents.create(Div.class);
-        content.setClassName("user-menu-header-content");
+        userSelector.setItems(users);
+        userSelector.setItemLabelGenerator(AppUser::getName);
 
-        String name = generateUserName(user);
-
-        Avatar avatar = createAvatar(name);
-        avatar.addThemeVariants(AvatarVariant.LARGE);
-
-        Span text = uiComponents.create(Span.class);
-        text.setText(name);
-        text.setClassName("user-menu-text");
-
-        content.add(avatar, text);
-
-        if (name.equals(user.getUsername())) {
-            text.addClassName("user-menu-text-subtext");
-        } else {
-            Span subtext = uiComponents.create(Span.class);
-            subtext.setText(user.getUsername());
-            subtext.setClassName("user-menu-subtext");
-
-            content.add(subtext);
+        AppUser current = currentAppUserProvider.getCurrentAppUser();
+        if (current != null) {
+            users.stream()
+                    .filter(user -> user.getId().equals(current.getId()))
+                    .findFirst()
+                    .ifPresent(userSelector::setValue);
         }
 
-        return content;
+        userSelector.addValueChangeListener(this::onUserSelected);
     }
 
-    private Avatar createAvatar(String fullName) {
-        Avatar avatar = uiComponents.create(Avatar.class);
-        avatar.setName(fullName);
-        avatar.getElement().setAttribute("tabindex", "-1");
-        avatar.setClassName("user-menu-avatar");
-
-        return avatar;
-    }
-
-    private String generateUserName(User user) {
-        String userName = String.format("%s %s",
-                        Strings.nullToEmpty(user.getFirstName()),
-                        Strings.nullToEmpty(user.getLastName()))
-                .trim();
-
-        return userName.isEmpty() ? user.getUsername() : userName;
-    }
-
-    private boolean isSubstituted(User user) {
-        UserDetails authenticatedUser = currentUserSubstitution.getAuthenticatedUser();
-        return user != null && !authenticatedUser.getUsername().equals(user.getUsername());
+    private void onUserSelected(HasValue.ValueChangeEvent<AppUser> event) {
+        if (!event.isFromClient()) {
+            return;
+        }
+        AppUser user = event.getValue();
+        currentAppUserProvider.setCurrentAppUserId(user != null ? user.getId() : null);
     }
 }

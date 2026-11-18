@@ -37,6 +37,9 @@ dependencies {
     implementation 'io.jmix.datatools:jmix-datatools-starter'
     implementation 'io.jmix.datatools:jmix-datatools-flowui-starter'
 
+    // Official Russian translations of framework/add-on messages (UI is ru by default)
+    implementation 'io.jmix.translations:jmix-translations-ru'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.vaadin:vaadin-dev'
 
